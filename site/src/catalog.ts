@@ -30,6 +30,16 @@ export const catalog: Animation[] = [
     poster: "classical-failure.png",
     seconds: 18,
   },
+  {
+    slug: "sommerfeld",
+    title: "Sommerfeld: ondas en una caja",
+    topic: "Física del estado sólido",
+    summary:
+      "Los electrones llenan los estados k de menor energía, dos por punto (Pauli), hasta la esfera de Fermi. En el cobre E_F = 7,0 eV.",
+    video: "sommerfeld.mp4",
+    poster: "sommerfeld.png",
+    seconds: 13,
+  },
 ];
 
 export function mediaUrl(file: string, base: string = import.meta.env.BASE_URL): string {
