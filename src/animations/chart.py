@@ -54,9 +54,9 @@ class Chart:
                     color=theme.MUTED,
                     stroke_width=2,
                 ),
-                Typst(f"{tick:g}", color=theme.MUTED, font_size=22).move_to(
-                    [self.px(tick), base - 0.28, 0]
-                ),
+                Typst(
+                    f"{tick:g}".replace(".", ","), color=theme.MUTED, font_size=22
+                ).move_to([self.px(tick), base - 0.28, 0]),
             )
         group.add(
             Typst(x_label, color=theme.MUTED, font_size=26).move_to(
