@@ -15,6 +15,7 @@ INK = ManimColor("#222222")
 ACCENT = ManimColor("#8B2A1F")
 MUTED = ManimColor("#8A8A8A")
 SPHERE = ManimColor("#6E6E6E")
+SPHERE_DARK = ManimColor("#4A4A4A")
 FIELD = ManimColor("#2B4F8F")
 
 TITLE_Y = 7.0

@@ -21,7 +21,15 @@ def rotation(theta: float, phi: float) -> np.ndarray:
 
 
 class BallCloud(VGroup):
-    def __init__(self, points: np.ndarray, radius: float, color, sheen: float = 0.6):
+    def __init__(
+        self,
+        points: np.ndarray,
+        radius: float,
+        color,
+        sheen: float = 0.6,
+        z_offset: int = 0,
+    ):
+        self.z_offset = z_offset
         self.points3d = np.asarray(points, dtype=float)
         self.base = ManimColor(color)
         self.radius = radius
@@ -45,7 +53,7 @@ class BallCloud(VGroup):
         near = (depth - depth.min()) / max(np.ptp(depth), 1e-9)
         for ball, p, rank, n in zip(self.submobjects, rotated, order, near):
             ball.move_to([p[0] * zoom, p[2] * zoom, 0])
-            ball.set_z_index(int(rank))
+            ball.set_z_index(int(rank) + self.z_offset)
             ball.scale_to_fit_width(2 * self.radius * zoom * (0.8 + 0.2 * n))
             ball.set_fill(self.color_at(n))
         return self
