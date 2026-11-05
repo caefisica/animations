@@ -7,6 +7,7 @@ from manim import (
     RIGHT,
     UP,
     Arrow,
+    DashedLine,
     FadeIn,
     FadeOut,
     Line,
@@ -23,8 +24,9 @@ from animations.drude_sim import simulate
 
 FPS = 30
 CENTER = UP * 1.4
-ELECTRONS = 48
-SIM_SECONDS = 20
+ELECTRONS = 125  # one free electron per ion, as in copper
+SIM_SECONDS = 24
+FIELD_OFF = 13.0
 CHART_LEFT, CHART_RIGHT = -3.6, 3.6
 CHART_BOTTOM, CHART_TOP = -4.1, -2.1
 TAU = 0.5
@@ -51,7 +53,15 @@ class DrudeGas(Scene):
     def construct(self):
         frames = SIM_SECONDS * FPS
         run = simulate(
-            ELECTRONS, frames, 1 / FPS, TAU, ACCEL, thermal=1.4, half_box=1.6, seed=3
+            ELECTRONS,
+            frames,
+            1 / FPS,
+            TAU,
+            ACCEL,
+            thermal=1.0,
+            half_box=1.6,
+            seed=3,
+            field_off_at=FIELD_OFF,
         )
         smooth = np.convolve(run.drift, np.ones(45) / 45, mode="same")
 
@@ -81,8 +91,32 @@ class DrudeGas(Scene):
             color=theme.MUTED,
             stroke_width=2,
         )
-        label = Typst("velocidad de arrastre", color=theme.MUTED, font_size=24).move_to(
-            [0, CHART_TOP + 0.3, 0]
+        label = Typst(
+            "velocidad de arrastre (escala exagerada)",
+            color=theme.MUTED,
+            font_size=24,
+        ).move_to([0, CHART_TOP + 0.45, 0])
+        steady_y = CHART_BOTTOM + (CHART_TOP - CHART_BOTTOM) / 1.6
+        steady = DashedLine(
+            [CHART_LEFT, steady_y, 0],
+            [CHART_RIGHT, steady_y, 0],
+            color=theme.FIELD,
+            stroke_width=2,
+        )
+        steady_label = (
+            Typst("$ v_d = e E tau / m $", color=theme.FIELD, font_size=26)
+            .next_to(steady, UP, buff=0.08)
+            .align_to(steady, RIGHT)
+        )
+        off_x = CHART_LEFT + (CHART_RIGHT - CHART_LEFT) * FIELD_OFF / SIM_SECONDS
+        off_mark = Line(
+            [off_x, CHART_BOTTOM, 0],
+            [off_x, CHART_BOTTOM + 0.3, 0],
+            color=theme.MUTED,
+            stroke_width=2,
+        )
+        off_label = Typst("E = 0", color=theme.MUTED, font_size=24).next_to(
+            off_mark, DOWN, buff=0.1
         )
 
         clock = ValueTracker(0)
@@ -104,14 +138,18 @@ class DrudeGas(Scene):
 
         self.add(heading, caption)
         self.play(FadeIn(ions), FadeIn(electrons), FadeIn(arrow), FadeIn(field))
-        self.add(axis, label, curve)
+        self.add(axis, label, steady, steady_label, off_mark, off_label, curve)
+        for mob in (arrow, field):
+            mob.add_updater(
+                lambda m: m.set_opacity(1.0 if clock.get_value() < FIELD_OFF else 0.15)
+            )
         self.play(
             clock.animate.set_value(SIM_SECONDS - 1),
             angle.animate.set_value(1.6),
             run_time=SIM_SECONDS - 1,
             rate_func=linear,
         )
-        for mob in (ions, electrons, curve):
+        for mob in (ions, electrons, curve, arrow, field):
             mob.clear_updaters()
         self.play(FadeOut(*self.mobjects), run_time=0.6)
         self.end_card()
