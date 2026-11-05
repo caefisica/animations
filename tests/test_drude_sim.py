@@ -40,6 +40,22 @@ def test_drift_decays_with_tau_after_the_field_turns_off():
     assert abs(after_one_tau / steady - np.exp(-1)) < 0.12
 
 
+def test_no_drift_before_the_field_turns_on():
+    result = simulate(
+        n=4000,
+        frames=300,
+        dt=1 / 30,
+        tau=0.5,
+        accel=0.8,
+        thermal=1.0,
+        half_box=1.6,
+        seed=4,
+        field_on_at=5.0,
+    )
+    assert abs(result.drift[:140].mean()) < 0.03
+    assert result.drift[250:].mean() > 0.25
+
+
 def test_shorter_tau_drifts_slower():
     assert run(0.2).drift[300:].mean() < run(0.8).drift[300:].mean()
 

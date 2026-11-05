@@ -12,6 +12,10 @@
   margin-bottom: 4px;
 }
 
+.logo {
+  border-radius: var(--radius-3, 12px);
+}
+
 .brand {
   margin: 0;
   font-family: var(--font-serif);

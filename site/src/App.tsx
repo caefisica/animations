@@ -56,7 +56,14 @@ export function App() {
   return (
     <main class={styles.page}>
       <header class={styles.header}>
-        <h1 class={styles.brand}>CAE Física</h1>
+        <img
+          class={styles.logo}
+          src={`${import.meta.env.BASE_URL}logo-cae.png`}
+          alt=""
+          width="56"
+          height="56"
+        />
+        <h1 class={styles.brand}>@caefisica</h1>
         <p class={styles.tagline}>
           Animaciones de física hechas con código. Una idea por video.
         </p>
