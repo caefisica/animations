@@ -19,7 +19,7 @@ from animations import metals, theme
 from animations.balls import BallCloud
 from animations.chart import Chart
 from animations.drude_sim import simulate
-from animations.scenes.drude import CENTER, cubic_lattice
+from animations.scenes.drude import CENTER, PHI, ZOOM, cubic_lattice
 
 FPS = 30
 SECONDS = 14.0
@@ -51,15 +51,12 @@ class ClassicalFailure(Scene):
         )
         heading = theme.title("La falla clásica")
         caption = theme.caption(
-            "C_V = 3 / 2 R",
-            "cobre: $gamma$ = 0,50 (libres) · 0,695 medido, en mJ/(mol K²)",
+            "C_V = 3 \\/ 2 R",
+            "$gamma$ del cobre, mJ/(mol K²): 0,50 libres, 0,695 medido",
         )
-        caption[1].scale(0.85).move_to(UP * theme.NOTE_Y)
 
         ions = BallCloud(cubic_lattice(5, 0.8), 0.15, theme.SPHERE_DARK)
         electrons = BallCloud(run.positions[0], 0.13, theme.ACCENT, z_offset=1000)
-        for cloud in (ions, electrons):
-            cloud.shift(CENTER)
 
         axes = CHART.axes([0, 100, 200, 300], '$ T " (K)" $', '$ C " (J/(mol K))" $')
         drude_y = metals.drude_heat_capacity()
@@ -70,13 +67,15 @@ class ClassicalFailure(Scene):
             stroke_width=3,
         )
         drude_label = Typst(
-            '$ "Drude: " 3 / 2 R = 12","5 " J/(mol K)" $', color=theme.INK, font_size=22
-        ).next_to(drude_line, UP, buff=0.08)
+            '$ "Drude: " 3 \\/ 2 R = 12","5 $',
+            color=theme.INK,
+            font_size=theme.LABEL_SIZE,
+        ).next_to(drude_line, UP, buff=0.1)
         measured_label = Typst(
-            '$ "medido: " gamma T = 0","21 " a 300 K" $',
+            '$ "medido a 300 K: " 0","21 $',
             color=theme.ACCENT,
-            font_size=22,
-        ).move_to(CHART.point(T_MAX * 0.5, 2.6))
+            font_size=theme.LABEL_SIZE,
+        ).move_to(CHART.point(T_MAX * 0.45, 2.0))
         gap_x = T_MAX * 0.8
         bracket = DoubleArrow(
             CHART.point(gap_x, MEASURED * T_MAX),
@@ -85,27 +84,26 @@ class ClassicalFailure(Scene):
             buff=0,
             stroke_width=4,
         )
-        gap = Typst("60 veces menos", color=theme.ACCENT, font_size=28).next_to(
-            bracket, LEFT, buff=0.15
-        )
+        gap = Typst(
+            "60 veces menos", color=theme.ACCENT, font_size=theme.LABEL_SIZE
+        ).next_to(bracket, LEFT, buff=0.2)
 
         clock = ValueTracker(0)
+
+        def place(cloud):
+            theta = 0.9 + 0.2 * clock.get_value() / SECONDS
+            cloud.view(theta, PHI, ZOOM).shift(CENTER)
 
         def step(group):
             i = min(int(clock.get_value() * FPS), frames - 1)
             group.points3d = run.positions[shown[i]]
-            group.view(0.9 + 0.2 * clock.get_value() / SECONDS, 0.9, 1.0)
-            group.shift(CENTER)
+            place(group)
 
         def temperature() -> float:
             return T_MAX * clock.get_value() / SECONDS
 
         electrons.add_updater(step)
-        ions.add_updater(
-            lambda m: m.view(0.9 + 0.2 * clock.get_value() / SECONDS, 0.9, 1.0).shift(
-                CENTER
-            )
-        )
+        ions.add_updater(place)
         measured = CHART.curve([0, 1], [0, 0], theme.ACCENT)
         measured.add_updater(
             lambda c: c.become(

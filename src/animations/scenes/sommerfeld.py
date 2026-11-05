@@ -2,6 +2,8 @@
 
 import numpy as np
 from manim import (
+    LEFT,
+    RIGHT,
     UP,
     DashedLine,
     Dot,
@@ -17,11 +19,11 @@ from manim import (
 from animations import metals, theme
 from animations.balls import BallCloud
 from animations.chart import Chart
-from animations.scenes.drude import CENTER
+from animations.scenes.drude import CENTER, PHI, ZOOM
 
 HALF = 3  # k-points run from -HALF to HALF along each axis
 RADIUS = 3.05  # Fermi radius in grid units: the sphere just fits the cube
-SPACING = 0.55
+SPACING = 0.5
 FILL_SECONDS = 10.0
 HOLD_SECONDS = 2.5
 E_FERMI = metals.fermi_energy(metals.COPPER_DENSITY)
@@ -51,20 +53,18 @@ class Sommerfeld(Scene):
         filled = occupied(grid)
         count = len(filled)
 
-        k_fermi = metals.fermi_wavevector(metals.COPPER_DENSITY) * 1e-10
         t_fermi = f"{E_FERMI / metals.K_B:,.0f}".replace(",", " ")
         heading = theme.title("Sommerfeld: ondas en una caja")
         caption = theme.caption(
-            "E_F = (ħ^2 k_F^2) / (2 m)",
-            f"cobre: $k_F$ = {k_fermi:.2f} Å⁻¹ · $E_F$ = {E_FERMI:.1f} eV"
-            f" · $T_F$ = {t_fermi} K".replace(".", ","),
+            "E_F = ħ^2 k_F^2 \\/ (2 m)",
+            f"cobre: $E_F$ = {E_FERMI:.1f} eV · $T_F$ = {t_fermi} K".replace(".", ","),
         )
-        caption[1].scale(0.85).move_to(UP * theme.NOTE_Y)
         rule = Typst(
-            '$ k = 2 pi n \\/ L quad "(2 electrones por punto " k ")" $',
+            '$ "2 electrones por punto " k $',
             color=theme.MUTED,
-            font_size=26,
-        ).move_to(UP * 5.9)
+            font_size=theme.LABEL_SIZE,
+        )
+        rule.move_to([theme.LEFT_EDGE + rule.width / 2, theme.CORNER_Y, 0])
 
         empty = BallCloud(grid * SPACING, 0.07, "#BDBDBD")
         full = BallCloud(filled * SPACING, 0.12, theme.ACCENT, z_offset=1000)
@@ -79,8 +79,9 @@ class Sommerfeld(Scene):
             stroke_width=3,
         )
         fermi_label = Typst(
-            '$ E_F = 7","0 " eV" $', color=theme.ACCENT, font_size=24
-        ).next_to(fermi_line, UP, buff=0.06)
+            '$ E_F = 7","0 " eV" $', color=theme.ACCENT, font_size=theme.LABEL_SIZE
+        ).next_to(fermi_line, UP, buff=0.1)
+        fermi_label.align_to(fermi_line, LEFT).shift(RIGHT * 0.2)
         states = VGroup(
             *[
                 Dot(
@@ -98,8 +99,11 @@ class Sommerfeld(Scene):
         def shown() -> int:
             return int(progress.get_value() * count)
 
+        def place(cloud):
+            cloud.view(angle.get_value(), PHI, ZOOM).shift(CENTER)
+
         def refresh_full(group):
-            group.view(angle.get_value(), 0.9, 1.0).shift(CENTER)
+            place(group)
             for j, ball in enumerate(group):
                 ball.set_fill(opacity=1.0 if j < shown() else 0.0)
 
@@ -107,7 +111,7 @@ class Sommerfeld(Scene):
             for j, dot in enumerate(group):
                 dot.set_fill(opacity=1.0 if j < shown() else 0.0)
 
-        empty.add_updater(lambda m: m.view(angle.get_value(), 0.9, 1.0).shift(CENTER))
+        empty.add_updater(place)
         full.add_updater(refresh_full)
         states.add_updater(refresh_states)
 

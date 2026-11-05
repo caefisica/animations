@@ -10,10 +10,10 @@ from animations import theme
 
 @dataclass(frozen=True)
 class Chart:
-    left: float = -3.3
-    right: float = 3.6
-    bottom: float = -4.1
-    top: float = -2.0
+    left: float = theme.LEFT_EDGE + 0.3
+    right: float = theme.RIGHT_EDGE
+    bottom: float = -6.1
+    top: float = -2.5
     x_min: float = 0.0
     x_max: float = 1.0
     y_min: float = 0.0
@@ -50,25 +50,24 @@ class Chart:
             group.add(
                 Line(
                     [self.px(tick), base, 0],
-                    [self.px(tick), base - 0.08, 0],
+                    [self.px(tick), base - 0.1, 0],
                     color=theme.MUTED,
                     stroke_width=2,
                 ),
                 Typst(
-                    f"{tick:g}".replace(".", ","), color=theme.MUTED, font_size=22
-                ).move_to([self.px(tick), base - 0.28, 0]),
+                    f"{tick:g}".replace(".", ","),
+                    color=theme.MUTED,
+                    font_size=theme.TICK_SIZE,
+                ).move_to([self.px(tick), base - 0.4, 0]),
             )
-        group.add(
-            Typst(x_label, color=theme.MUTED, font_size=26).move_to(
-                [self.right - 0.3, self.bottom - 0.6, 0]
-            ),
-            Typst(y_label, color=theme.MUTED, font_size=26).move_to(
-                [self.left + 0.5, self.top + 0.25, 0]
-            ),
-        )
+        x_title = Typst(x_label, color=theme.MUTED, font_size=theme.LABEL_SIZE)
+        x_title.move_to([self.right - x_title.width / 2, self.bottom - 0.95, 0])
+        y_title = Typst(y_label, color=theme.MUTED, font_size=theme.LABEL_SIZE)
+        y_title.move_to([self.left + y_title.width / 2, self.top + 0.45, 0])
+        group.add(x_title, y_title)
         return group
 
-    def curve(self, xs, ys, color, width: float = 4) -> VMobject:
+    def curve(self, xs, ys, color, width: float = 5) -> VMobject:
         line = VMobject(stroke_color=color, stroke_width=width)
         line.set_points_as_corners([self.point(x, y) for x, y in zip(xs, ys)])
         return line
