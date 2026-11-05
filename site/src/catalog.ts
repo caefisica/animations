@@ -18,7 +18,7 @@ export const catalog: Animation[] = [
       "Electrones libres chocan con una red de iones. El campo E los empuja y la resistividad sale de ρ = m / (n e² τ).",
     video: "drude.mp4",
     poster: "drude.png",
-    seconds: 31,
+    seconds: 28,
   },
 ];
 

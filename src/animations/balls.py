@@ -20,6 +20,12 @@ def rotation(theta: float, phi: float) -> np.ndarray:
     return about_x @ about_z
 
 
+def project(point, theta: float, phi: float, zoom: float = 1.0) -> np.ndarray:
+    """Screen position of a 3D point under the same camera as `BallCloud.view`."""
+    x, _, z = rotation(theta, phi) @ np.asarray(point, dtype=float)
+    return np.array([x * zoom, z * zoom, 0.0])
+
+
 class BallCloud(VGroup):
     def __init__(
         self,
