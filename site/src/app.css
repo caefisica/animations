@@ -1,0 +1,88 @@
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/fraunces";
+
+/* Tokens are the subset of culqi360 apps/web app.css that this site uses. */
+:root {
+  --font-sans: "Inter Variable", Inter, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: "Fraunces Variable", Georgia, serif;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-fast: 150ms;
+  --motion-normal: 300ms;
+
+  --font-size-label: 0.846rem;
+  --font-size-caption: 0.923rem;
+  --font-size-body: 1rem;
+  --font-size-heading-md: 1.538rem;
+  --font-size-8: 2rem;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --line-height-lg: 1.5;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --z-modal: 100;
+
+  --background: #fff;
+  --background-app: #f9f9f9;
+  --foreground: #333;
+  --foreground-secondary: #666;
+  --foreground-tertiary: #999;
+  --card: #fff;
+  --card-foreground: #666;
+  --secondary: #fcfcfc;
+  --tertiary: #f1f1f1;
+  --border: #f1f1f1;
+  --border-medium: #ebebeb;
+  --ring: #333;
+  --focus-ring-shadow: 0 0 0 1px color-mix(in oklab, var(--ring) 70%, transparent),
+    0 0 0 3px color-mix(in oklab, var(--background) 75%, transparent);
+}
+
+@supports (color: color(display-p3 1 1 1)) {
+  :root {
+    --background: color(display-p3 1 1 1);
+    --background-app: color(display-p3 0.976 0.976 0.976);
+    --foreground: color(display-p3 0.2 0.2 0.2);
+    --foreground-secondary: color(display-p3 0.4 0.4 0.4);
+    --foreground-tertiary: color(display-p3 0.6 0.6 0.6);
+    --card: color(display-p3 1 1 1);
+    --card-foreground: color(display-p3 0.4 0.4 0.4);
+    --secondary: color(display-p3 0.988 0.988 0.988);
+    --tertiary: color(display-p3 0.945 0.945 0.945);
+    --border: color(display-p3 0.945 0.945 0.945);
+    --border-medium: color(display-p3 0.922 0.922 0.922);
+    --ring: color(display-p3 0.2 0.2 0.2);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #171717;
+    --background-app: #191919;
+    --foreground: #ebebeb;
+    --foreground-secondary: #b3b3b3;
+    --foreground-tertiary: #828282;
+    --card: #171717;
+    --card-foreground: #b3b3b3;
+    --secondary: #1b1b1b;
+    --tertiary: #1d1d1d;
+    --border: #1d1d1d;
+    --border-medium: #222;
+    --ring: #ebebeb;
+  }
+}
+
+html {
+  font-size: 13px;
+}
+
+body {
+  margin: 0;
+  background: var(--background-app);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  -webkit-font-smoothing: antialiased;
+}
