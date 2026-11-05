@@ -2,7 +2,8 @@
 
 Units are scene units and seconds of animation time, not SI. `tau` is the mean
 time between collisions. Drift speed settles at `accel * tau` while the field
-is on and decays as exp(-t / tau) after `field_off_at`.
+is on, from `field_on_at` to `field_off_at`, and decays as exp(-t / tau) after
+the field turns off.
 """
 
 from dataclasses import dataclass
@@ -26,6 +27,7 @@ def simulate(
     half_box: float,
     seed: int = 0,
     field_off_at: float | None = None,
+    field_on_at: float = 0.0,
 ) -> Run:
     rng = np.random.default_rng(seed)
 
@@ -38,7 +40,8 @@ def simulate(
     positions = np.empty((frames, n, 3))
     drift = np.empty(frames)
     for i in range(frames):
-        if field_off_at is None or i * dt < field_off_at:
+        on = i * dt >= field_on_at and (field_off_at is None or i * dt < field_off_at)
+        if on:
             vel[:, 0] -= accel * dt
         pos = pos + vel * dt
         pos = (pos + half_box) % (2 * half_box) - half_box
