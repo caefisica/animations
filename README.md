@@ -32,3 +32,19 @@ previewing: they override the page with a 16:9 size. Use `-r WIDTH,HEIGHT`.
   frame for 64 spheres. Its OpenGL renderer fails on Typst text
   (`set_stroke() got an unexpected keyword argument 'family'`, manim 0.22.1).
   `BallCloud` projects points itself and sorts them back to front.
+
+## Site
+
+`site/` is a Vite + Solid 2 page that shows the rendered animations in an
+Instagram-style grid. Styles come from the culqi360 web app tokens. It deploys
+to https://caefisica.github.io/animations/ with `.github/workflows/pages.yml`.
+
+```sh
+cd site
+bun install
+bun run dev        # local server
+bun run typecheck && bun run test && bun run build
+```
+
+Add an animation by putting `<slug>.mp4` and `<slug>.png` in `site/public/media/`
+and a row in `site/src/catalog.ts`.
