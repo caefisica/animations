@@ -20,6 +20,16 @@ export const catalog: Animation[] = [
     poster: "drude.png",
     seconds: 28,
   },
+  {
+    slug: "classical-failure",
+    title: "La falla clásica",
+    topic: "Física del estado sólido",
+    summary:
+      "Drude predice C = 3R/2 = 12,5 J/(mol K) para los electrones del cobre. A 300 K se mide 0,21: unas 60 veces menos.",
+    video: "classical-failure.mp4",
+    poster: "classical-failure.png",
+    seconds: 18,
+  },
 ];
 
 export function mediaUrl(file: string, base: string = import.meta.env.BASE_URL): string {
