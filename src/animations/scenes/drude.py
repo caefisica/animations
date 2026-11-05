@@ -1,18 +1,15 @@
 """Drude model: electrons drift through a lattice of ions under a field."""
 
-from pathlib import Path
-
 import numpy as np
 from manim import (
     DOWN,
-    LEFT,
     RIGHT,
     UP,
     Arrow,
     DashedLine,
+    Dot,
     FadeIn,
     FadeOut,
-    ImageMobject,
     Line,
     Scene,
     Typst,
@@ -23,12 +20,12 @@ from manim import (
 )
 
 from animations import theme
-from animations.balls import BallCloud
+from animations.balls import BallCloud, project
 from animations.drude_sim import simulate
 
-LOGO = Path(__file__).resolve().parents[1] / "assets" / "logo-cae.png"
-
 FPS = 30
+PHI = 0.9  # camera tilt
+LINE_OFFSETS = (-1.0, 0.0, 1.0)  # field lines cross the box in a 3 x 3 grid
 CENTER = UP * 1.4
 ELECTRONS = 125  # one free electron per ion, as in copper
 TAU = 0.6  # seconds of animation time; the chart axis is in units of tau
@@ -139,6 +136,59 @@ def chart_frame() -> VGroup:
     )
 
 
+def field_lines(angle: float) -> VGroup:
+    """Thin arrows along +x through the lattice: the field acting on every electron."""
+    lines = VGroup()
+    for y in LINE_OFFSETS:
+        for z in LINE_OFFSETS:
+            start = CENTER + project([-2.0, y, z], angle, PHI)
+            end = CENTER + project([2.0, y, z], angle, PHI)
+            lines.add(
+                Arrow(
+                    start,
+                    end,
+                    color=theme.FIELD,
+                    buff=0,
+                    stroke_width=3,
+                    tip_length=0.18,
+                    max_tip_length_to_length_ratio=1,
+                )
+            )
+    return lines.set_z_index(500)  # over the ions, under the electrons
+
+
+PULSES_PER_LINE = 4
+PULSE_PERIOD = 1.6  # seconds for a pulse to cross the box
+
+
+def place_pulses(pulses: VGroup, angle: float, seconds: float, on: float) -> None:
+    """Move blue dots along each field line, +x, so the field reads as flow."""
+    index = 0
+    for y in LINE_OFFSETS:
+        for z in LINE_OFFSETS:
+            for k in range(PULSES_PER_LINE):
+                share = (seconds / PULSE_PERIOD + k / PULSES_PER_LINE) % 1
+                point = [-2.0 + 4.0 * share, y, z]
+                pulses[index].move_to(CENTER + project(point, angle, PHI))
+                pulses[index].set_fill(opacity=0.9 * on)
+                index += 1
+
+
+def field_arrow(angle: float) -> Arrow:
+    """The headline arrow, drawn above the lattice along the projected +x axis."""
+    along = project([1.0, 0.0, 0.0], angle, PHI)
+    along = along / np.linalg.norm(along)
+    middle = CENTER + UP * 3.1
+    return Arrow(
+        middle - along * 1.5,
+        middle + along * 1.5,
+        color=theme.FIELD,
+        buff=0,
+        stroke_width=10,
+        max_tip_length_to_length_ratio=1,
+    ).set_z_index(2000)
+
+
 class DrudeGas(Scene):
     def construct(self):
         frames = int(SIM_SECONDS * FPS)
@@ -169,16 +219,6 @@ class DrudeGas(Scene):
         electrons = BallCloud(
             run.positions[0], 0.13, theme.ACCENT, z_offset=1000
         ).shift(CENTER)
-        arrow = Arrow(
-            CENTER + LEFT * 1.6 + DOWN * 2.3,
-            CENTER + RIGHT * 1.6 + DOWN * 2.3,
-            color=theme.FIELD,
-            buff=0,
-            stroke_width=8,
-        )
-        field = Typst("$ E $", color=theme.FIELD, font_size=48).next_to(
-            arrow, RIGHT, buff=0.2
-        )
         frame = chart_frame()
 
         clock = ValueTracker(0)
@@ -190,19 +230,41 @@ class DrudeGas(Scene):
         def step(group):
             i = min(int(clock.get_value() * FPS), frames - 1)
             group.points3d = run.positions[i]
-            group.view(angle.get_value(), 0.9, 1.0).shift(CENTER)
+            group.view(angle.get_value(), PHI, 1.0).shift(CENTER)
 
-        ions.add_updater(lambda m: m.view(angle.get_value(), 0.9, 1.0).shift(CENTER))
+        lines = field_lines(angle.get_value())
+        arrow = field_arrow(angle.get_value())
+        label_on = Typst("$ E eq.not 0 $", color=theme.FIELD, font_size=44)
+        label_off = Typst("$ E = 0 $", color=theme.MUTED, font_size=44)
+        pulses = VGroup(
+            *[
+                Dot(radius=0.07, color=theme.FIELD).set_z_index(600)
+                for _ in range(len(LINE_OFFSETS) ** 2 * PULSES_PER_LINE)
+            ]
+        )
+
+        def refresh_field(_):
+            on = 1.0 if field_is_on() else 0.0
+            place_pulses(pulses, angle.get_value(), clock.get_value(), on)
+            for old, new in zip(lines, field_lines(angle.get_value()), strict=True):
+                old.become(new)
+                old.set_stroke(opacity=0.6 * on)
+                old.tip.set_fill(opacity=0.6 * on)
+            arrow.become(field_arrow(angle.get_value()))
+            arrow.set_stroke(opacity=on).set_fill(opacity=on)
+            label_on.move_to(arrow.get_end() + UP * 0.45).set_opacity(on)
+            label_off.move_to(CENTER + UP * 3.1).set_opacity(1 - on)
+
+        ions.add_updater(lambda m: m.view(angle.get_value(), PHI, 1.0).shift(CENTER))
         electrons.add_updater(step)
         curve = drift_curve(smooth, 2)
         curve.add_updater(
             lambda c: c.become(drift_curve(smooth, int(clock.get_value() * FPS)))
         )
-        for mob in (arrow, field):
-            mob.add_updater(lambda m: m.set_opacity(1.0 if field_is_on() else 0.15))
+        driver = VGroup().add_updater(refresh_field)
 
-        self.add(heading, caption)
-        self.play(FadeIn(ions), FadeIn(electrons), FadeIn(arrow), FadeIn(field))
+        self.add(heading, caption, driver, lines, pulses, arrow, label_on, label_off)
+        self.play(FadeIn(ions), FadeIn(electrons))
         self.add(frame, curve)
         self.play(
             clock.animate.set_value(SIM_SECONDS - 1 / FPS),
@@ -210,10 +272,9 @@ class DrudeGas(Scene):
             run_time=SIM_SECONDS,
             rate_func=linear,
         )
-        for mob in (ions, electrons, curve, arrow, field):
+        for mob in (ions, electrons, curve, driver):
             mob.clear_updaters()
         self.play(FadeOut(*self.mobjects), run_time=0.6)
-        self.end_card()
 
     def title_card(self):
         name = Typst("Drude", color=theme.INK, font_size=120)
@@ -222,11 +283,3 @@ class DrudeGas(Scene):
         self.play(FadeIn(name), FadeIn(sub), run_time=0.8)
         self.wait(1.4)
         self.play(FadeOut(name), FadeOut(sub), run_time=0.6)
-
-    def end_card(self):
-        logo = ImageMobject(str(LOGO)).scale_to_fit_height(2.6)
-        handle = Typst("\\@caefisica", color=theme.MUTED, font_size=48)
-        handle.next_to(logo, DOWN, buff=0.2)
-        self.play(FadeIn(logo), FadeIn(handle), run_time=0.6)
-        self.wait(1.2)
-        self.play(FadeOut(logo), FadeOut(handle), run_time=0.4)
